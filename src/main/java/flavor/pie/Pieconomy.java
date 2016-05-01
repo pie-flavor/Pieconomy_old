@@ -14,12 +14,14 @@ import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.ConfigDir;
+import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.NamedCause;
 import org.spongepowered.api.event.game.state.*;
 import org.spongepowered.api.item.ItemType;
+import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.service.economy.EconomyService;
@@ -154,6 +156,36 @@ public class Pieconomy {
 						GenericArguments.optional(GenericArguments.catalogedElement(Text.of("currency"), Currency.class)))
 				.build();
 		game.getCommandManager().register(this, pay, "pay", "transfer");
+		CommandSpec value = CommandSpec.builder()
+				.executor(this::value)
+				.description(Text.of("Gets the value of an item."))
+				.arguments(GenericArguments.optional(GenericArguments.catalogedElement(Text.of("item"), ItemType.class)))
+				.build();
+		game.getCommandManager().register(this, value, "value", "worth", "val");
+	}
+	CommandResult value(CommandSource src, CommandContext args) throws CommandException {
+		Optional<ItemType> item_ = args.getOne("item");
+		ItemType item;
+		if (item_.isPresent()) {
+			item = item_.get();
+		} else {
+			if (src instanceof Player) {
+				Player p = (Player) src;
+				Optional<ItemStack> stack = p.getItemInHand();
+				if (stack.isPresent()) {
+					item = stack.get().getItem();
+				} else {
+					throw new CommandException(Text.of("You must be holding an item!"));
+				}
+			} else {
+				throw new CommandException(Text.of("You must specify an item type!"));
+			}
+		}
+		Pair<BigDecimal, Currency> pair = items.get(item);
+		if (pair == null) throw new CommandException(Text.of("This item is not worth anything!"));
+		Text text = pair.getValue().format(pair.getKey());
+		src.sendMessage(Text.of(item.getId(), " is worth ", text, "."));
+		return CommandResult.builder().queryResult(pair.getKey().intValue()).successCount(1).build();
 	}
 	CommandResult bal(CommandSource src, CommandContext args) throws CommandException {
 		Optional<User> user_ = args.getOne("player");
@@ -178,7 +210,7 @@ public class Pieconomy {
 		BigDecimal amount = acc.getBalance(currency);
 		Text money = currency.format(amount);
 		src.sendMessage(Text.of("You currently have ", money, "."));
-		return CommandResult.builder().queryResult(amount.intValue()).build();
+		return CommandResult.builder().queryResult(amount.intValue()).successCount(1).build();
 	}
 	CommandResult pay(CommandSource src, CommandContext args) throws CommandException {
 		if (!(src instanceof User)) {
