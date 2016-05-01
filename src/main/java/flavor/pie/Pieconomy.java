@@ -39,7 +39,7 @@ import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 
-@Plugin(id="pieconomy",name="Pieconomy", authors="pie_flavor", description="An economy plugin that uses items as currency", version="1.0.0")
+@Plugin(id="pieconomy",name="Pieconomy", authors="pie_flavor", description="An economy plugin that uses items as currency", version="1.0.1")
 public class Pieconomy {
 	@Inject Game game;
 	@Inject @ConfigDir(sharedRoot = false) File dir;
