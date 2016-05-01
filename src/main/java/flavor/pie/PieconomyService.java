@@ -15,8 +15,8 @@ public class PieconomyService implements EconomyService {
 	PieconomyService(Currency defaultCurrency, Set<Currency> currencies, Game game, Pieconomy plugin) {
 		this.defaultCurrency = defaultCurrency;
 		this.currencies = currencies;
-		calculators = new HashSet<>();
-		accounts = new HashMap<>();
+		calculators = new HashSet<ContextCalculator<Account>>();
+		accounts = new HashMap<UUID, UniqueAccount>();
 		this.game = game;
 		this.plugin = plugin;
 	}
