@@ -35,7 +35,7 @@ public class PieconomyCurrencyRegistryModule implements AdditionalCatalogRegistr
     }
 
     @Override
-    @DelayedRegistration(RegistrationPhase.INIT)
+    @DelayedRegistration(RegistrationPhase.LOADED)
     public void registerDefaults() {
         for (Currency currency : defaults) {
             currencies.put(currency.getId(), currency);
