@@ -1,4 +1,4 @@
-package flavor.pie;
+package flavor.pie.pieconomy;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -53,7 +53,7 @@ public class PieconomyCurrency implements Currency {
 
 	@Override
 	public Text format(BigDecimal amount, int numFractionDigits) {
-		return format.apply(ImmutableMap.of("amount", Text.of(amount.round(new MathContext(numFractionDigits)).toPlainString()))).build();
+		return format.apply(ImmutableMap.of("amount", Text.of(amount.round(new MathContext(numFractionDigits)).toPlainString()), "symbol", symbol)).build();
 	}
 
 	@Override

@@ -1,4 +1,4 @@
-package flavor.pie;
+package flavor.pie.pieconomy;
 
 import java.math.BigDecimal;
 import java.util.Set;

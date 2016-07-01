@@ -1,4 +1,4 @@
-package flavor.pie;
+package flavor.pie.pieconomy;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
@@ -23,11 +23,13 @@ import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.Order;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.NamedCause;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
+import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.Plugin;
@@ -116,6 +118,9 @@ public class Pieconomy {
         }
         service = new PieconomyService(defaultCurrency, currencies, game, this);
         items = new HashMap<>();
+    }
+    @Listener(order= Order.EARLY)
+    public void init(GameInitializationEvent e) {
         for (Entry<Object, ? extends CommentedConfigurationNode> entry : itemRoot.getNode("items").getChildrenMap().entrySet()) {
             Object obj = entry.getKey();
             ConfigurationNode node = entry.getValue();
@@ -134,7 +139,7 @@ public class Pieconomy {
                 return;
             }
             ItemType type = type_.get();
-            String currencyId = node.getNode("currency").getString(defaultCurrency.getId());
+            String currencyId = node.getNode("currency").getString(service.getDefaultCurrency().getId());
             Optional<Currency> currency_ = game.getRegistry().getType(Currency.class, currencyId);
             if (!currency_.isPresent()) {
                 logger.error("Error when loading config: "+Joiner.on(".").join(node.getPath())+": '"+currencyId+"' is an invalid Currency");
@@ -153,7 +158,7 @@ public class Pieconomy {
         CommandSpec bal = CommandSpec.builder()
                 .executor(this::bal)
                 .description(Text.of("Tells you how much money you have on you."))
-                .arguments(GenericArguments.optional(GenericArguments.user(Text.of("player"))),
+                .arguments(GenericArguments.userOrSource(Text.of("player")),
                         GenericArguments.optional(GenericArguments.catalogedElement(Text.of("currency"), Currency.class)))
                 .build();
         game.getCommandManager().register(this, bal, "balance", "bal", "money");
@@ -171,6 +176,10 @@ public class Pieconomy {
                 .arguments(GenericArguments.optional(GenericArguments.catalogedElement(Text.of("item"), ItemType.class)))
                 .build();
         game.getCommandManager().register(this, value, "value", "worth", "val");
+    }
+    @Listener
+    public void logout(ClientConnectionEvent.Disconnect e) {
+        service.accounts.remove(e.getTargetEntity().getUniqueId());
     }
     CommandResult value(CommandSource src, CommandContext args) throws CommandException {
         Optional<ItemType> item_ = args.getOne("item");
@@ -197,16 +206,7 @@ public class Pieconomy {
         return CommandResult.builder().queryResult(pair.getKey().intValue()).successCount(1).build();
     }
     CommandResult bal(CommandSource src, CommandContext args) throws CommandException {
-        Optional<User> user_ = args.getOne("player");
-        User user;
-        if (!user_.isPresent()) {
-            if (src instanceof User)
-                user = (User) src;
-            else
-                throw new CommandException(Text.of("You must specify a user!"));
-        } else {
-            user = user_.get();
-        }
+        User user = args.<User>getOne("player").get();
         EconomyService service = game.getServiceManager().provide(EconomyService.class).get();
         Currency currency;
         Optional<Currency> currency_ = args.getOne("currency");

@@ -1,4 +1,4 @@
-package flavor.pie;
+package flavor.pie.pieconomy;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -35,7 +35,7 @@ public class PieconomyCurrencyRegistryModule implements AdditionalCatalogRegistr
     }
 
     @Override
-    @DelayedRegistration(RegistrationPhase.LOADED)
+    @DelayedRegistration(RegistrationPhase.INIT)
     public void registerDefaults() {
         for (Currency currency : defaults) {
             currencies.put(currency.getId(), currency);
